@@ -48,11 +48,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "crispy_forms",
+    'django.contrib.gis',
+    'rest_framework',
+    'crispy_forms',
 
     'account',
     'conf',
     'system',
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -97,21 +100,6 @@ DATABASES = {
 }
 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'cvcms',         # e.g. 'cims_db'
-#         'USER': 'cvcms',            # e.g. 'root'
-#         'PASSWORD': 'cvcms',    # e.g. 'password123'
-#         'HOST': 'localhost',                  # or your DB host/IP
-#         'PORT': '3306',                       # default MySQL port
-#         'OPTIONS': {
-#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-#             'charset': 'utf8mb4',
-#         },
-#     }
-# }
-
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -146,7 +134,15 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# Folders where your custom static files live (DURING DEVELOPMENT)
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -157,7 +153,17 @@ AUTH_USER_MODEL = 'account.User'
 
 LOGIN_URL = '/admin/login/'
 
-LOGIN_REDIRECT_URL = '/dashboard/'
+LOGIN_REDIRECT_URL = '/'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    # 'DEFAULT_PERMISSION_CLASSES': (
+    #     'rest_framework.permissions.IsAuthenticated',
+    # )
+}
 
 # from cvcms.ufold_settings import *
 from cvcms.jazzmin import *
+from cvcms.local import *

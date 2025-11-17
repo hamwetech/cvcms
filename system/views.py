@@ -1,8 +1,7 @@
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from account.models import User
-from system.models import Farmer, FarmerInspection
+from system.models.models import Farmer, FarmerInspection
 
 
 def dashboard_callback(request, context):

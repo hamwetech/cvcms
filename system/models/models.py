@@ -1,19 +1,21 @@
-from random import choices
 import calendar
-from datetime import datetime, date, timedelta
-from django.db import models
+from datetime import date
+# from django.db import models
 from django.conf import settings
 from django.urls import reverse
 from django.dispatch import receiver
+from django.contrib.gis.db import models
 from django.db.models.signals import post_save
 from django.contrib.auth.models import User
 
 from conf.models import District, County, SubCounty, Parish, Product, Crop, ProductVariation
+from system.models.modelmixin import TimeStampMixin
+from .land import land_upload_path
 
 User = settings.AUTH_USER_MODEL
 
 
-class Cooperative(models.Model):
+class Cooperative(TimeStampMixin):
     name = models.CharField(max_length=150, unique=True)
     logo = models.ImageField(upload_to='cooperatives/', null=True, blank=True)
     code = models.CharField(max_length=150, unique=True, null=True, blank=True)
@@ -50,7 +52,7 @@ class Cooperative(models.Model):
         return self.name
 
 
-class FarmerGroup(models.Model):
+class FarmerGroup(TimeStampMixin):
     name = models.CharField(max_length=255)
     cooperative = models.ForeignKey(Cooperative, null=True, blank=True, on_delete=models.SET_NULL)
     code = models.CharField(max_length=150, unique=True, null=True, blank=True)
@@ -80,10 +82,10 @@ class FarmerGroup(models.Model):
         return "{} ({})".format(self.name, self.village)
 
     def __str__(self):
-        return self.__unicode__()
+        return "{} ({})".format(self.name, self.village)
 
 
-class CertificationScope(models.Model):
+class CertificationScope(TimeStampMixin):
     class CertificationScopeOption(models.TextChoices):
         EC = "EC" "EC"
         NOP = "NOP" "NOP"
@@ -100,7 +102,7 @@ class CertificationScope(models.Model):
         return self.name
 
 
-class Farmer(models.Model):
+class Farmer(TimeStampMixin):
 
     title = (
         ('Mr', 'Mr'),
@@ -126,8 +128,8 @@ class Farmer(models.Model):
     is_handicap = models.BooleanField(default=False)
     date_of_birth = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=10, choices=(('Male', 'Male'), ('Female', 'Female')), null=True, blank=True)
-    maritual_status = models.CharField(max_length=10, null=True, blank=True,
-                                       choices=(('Single', 'Single'), ('Married', 'Married'),
+    marital_status = models.CharField(max_length=10, null=True, blank=True,
+                                      choices=(('Single', 'Single'), ('Married', 'Married'),
                                                 ('Widowed', 'Widow'), ('Divorced', 'Divorced')))
     id_number = models.CharField(max_length=150, null=True, blank=True, unique=True)
     id_type = models.CharField(max_length=150, null=True, blank=True,
@@ -165,15 +167,13 @@ class Farmer(models.Model):
     is_active = models.BooleanField(default=1)
     qrcode = models.ImageField(upload_to='qrcode', blank=True, null=True)
     app_id = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True)
-    create_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
-    create_date = models.DateTimeField(auto_now_add=True)
-    update_date = models.DateTimeField(auto_now=True)
+
 
     class Meta:
         db_table = 'cooperative_member'
 
-    def __unicode__(self):
-        return "{} {} {}".format(self.surname, self.first_name, self.other_name or '')
+    def __str__(self):
+        return "{} {} {}".format(self.surname, self.first_name or '', self.other_name or '')
 
     def get_name(self):
         return "%s %s %s" % (self.surname, self.first_name, self.other_name)
@@ -189,7 +189,18 @@ class Farmer(models.Model):
         return None
 
 
-class FarmerInspection(models.Model):
+class LandParcel(TimeStampMixin):
+    farmer = models.ForeignKey(Farmer, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    size_acres = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    boundary = models.PolygonField(geography=True, srid=4326)
+    map_image = models.ImageField(upload_to=land_upload_path, blank=True, null=True)
+
+    class Meta:
+        db_table = 'land_parcel'
+
+
+class FarmerInspection(TimeStampMixin):
     farmer = models.ForeignKey(Farmer, on_delete=models.CASCADE)
     inspection_date = models.DateField()
     coffee_plots_change = models.BooleanField(help_text='Are coffee plots same as previously visited and as registered in Farm Entrance Form and Farm map?')
@@ -202,16 +213,12 @@ class FarmerInspection(models.Model):
     organic_plot_crop = models.ManyToManyField(Crop, related_name="organic_plot_crop")
     conventional_plot_crop = models.ManyToManyField(Crop, related_name="conventional_plot_crop")
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    create_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
-
     class Meta:
         db_table = "farmer_inspection"
-        verbose_name = ""
+        verbose_name_plural = "Inspection"
 
 
-class InspectionAttendee(models.Model):
+class InspectionAttendee(TimeStampMixin):
 
     class FamilyRole(models.TextChoices):
         WIFE = "WIFE" "WIFE"
@@ -224,9 +231,7 @@ class InspectionAttendee(models.Model):
     role = models.CharField(max_length=120, choices=FamilyRole.choices)
     name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=120, null=True, blank=True)
-    create_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+
 
     def __str__(self):
         return f"{self.name} ({self.role})"
@@ -235,7 +240,7 @@ class InspectionAttendee(models.Model):
         db_table = "inspection_attendee"
 
 
-class InspectionSeedAndPlantingStock(models.Model):
+class InspectionSeedAndPlantingStock(TimeStampMixin):
     inspection = models.ForeignKey(FarmerInspection, on_delete=models.CASCADE)
     coffee_variety = models.CharField(max_length=255, help_text="Name of the coffee variety planted.")
     year_planted = models.PositiveIntegerField(help_text="Year the coffee was planted.")
@@ -246,15 +251,12 @@ class InspectionSeedAndPlantingStock(models.Model):
     chemcal_used = models.TextField(null=True, blank=True, help_text="List of chemicals used on the plants/seeds.")
     gmo = models.CharField(max_length=120, null=True, blank=True)
     comment = models.TextField(null=True, blank=True)
-    create_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "inspection_seed_and_planting_stock"
 
 
-class PlantProductionManagement(models.Model):
+class PlantProductionManagement(TimeStampMixin):
     """
     Section 5: Plant Production Management and Record Keeping
     """
@@ -306,8 +308,7 @@ class PlantProductionManagement(models.Model):
         return f"Plant Production Management - Inspection {self.inspection.pk}"
 
 
-# ----------------- SECTION 6 -----------------
-class SoilFertilityManagement(models.Model):
+class SoilFertilityManagement(TimeStampMixin):
     """
     Section 6: Soil and Fertility Management
     """
@@ -352,7 +353,7 @@ class SoilFertilityManagement(models.Model):
         return f"Soil Fertility Management - Inspection {self.inspection.pk}"
 
 
-class PestsAndDiseasesControl(models.Model):
+class PestsAndDiseasesControl(TimeStampMixin):
     CRITERION_CHOICES = [
         ('C', 'Compliant'),
         ('NC', 'Non-Compliant'),
@@ -392,7 +393,7 @@ class PestsAndDiseasesControl(models.Model):
         db_table = "pest_and_disease_control"
 
 
-class WeedManagement(models.Model):
+class WeedManagement(TimeStampMixin):
     CRITERION_CHOICES = [
         ('C', 'Compliant'),
         ('NC', 'Non-Compliant'),
@@ -425,7 +426,7 @@ class WeedManagement(models.Model):
         db_table = "weed_management"
 
 
-class HarvestAndPostharvest(models.Model):
+class HarvestAndPostharvest(TimeStampMixin):
     CRITERION_CHOICES = [
         ('C', 'Compliant'),
         ('NC', 'Non-Compliant'),
@@ -452,7 +453,7 @@ class HarvestAndPostharvest(models.Model):
         db_table = "harvest_and_postharvest"
 
 
-class RiskOfContamination(models.Model):
+class RiskOfContamination(TimeStampMixin):
     RISK_LEVEL_CHOICES = [
         ('Low', 'Low'),
         ('Medium', 'Medium'),
@@ -480,9 +481,6 @@ class RiskOfContamination(models.Model):
     # Measure taken to minimize risk
     measures_taken = models.TextField(blank=True, null=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
     class Meta:
         db_table = "risk_of_contamination"
 
@@ -490,7 +488,7 @@ class RiskOfContamination(models.Model):
         return f"Risk of Contamination Record #{self.id}"
 
 
-class VisitedField(models.Model):
+class VisitedField(TimeStampMixin):
     inspection = models.ForeignKey(
         "FarmerInspection",
         on_delete=models.CASCADE,
@@ -508,9 +506,6 @@ class VisitedField(models.Model):
     area = models.DecimalField(max_digits=9, decimal_places=2, null=True, blank=True, help_text="Field area (e.g., acres or hectares)")
     comments = models.TextField(null=True, blank=True, help_text="Comments or observations during inspection")
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
     def __str__(self):
         return f"Visited Field Record #{self.id}"
 
@@ -518,7 +513,7 @@ class VisitedField(models.Model):
         db_table = "visited_field"
 
 
-class Collection(models.Model):
+class Collection(TimeStampMixin):
     collection_date = models.DateTimeField()
     is_member = models.BooleanField(default=1)
     cooperative = models.ForeignKey(Cooperative, null=True, blank=True, on_delete=models.CASCADE)
@@ -530,9 +525,6 @@ class Collection(models.Model):
     quantity = models.DecimalField(max_digits=20, decimal_places=2)
     unit_price = models.DecimalField(max_digits=20, decimal_places=2)
     total_price = models.DecimalField(max_digits=20, decimal_places=2)
-    created_by = models.ForeignKey(User, blank=True, on_delete=models.CASCADE)
-    create_date = models.DateTimeField(auto_now_add=True)
-    update_date = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'collection'

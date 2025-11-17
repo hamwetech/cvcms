@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 # from unfold.admin import ModelAdmin
 # from django.contrib import ModelAdmin
-from conf.models import District, County, SubCounty, Parish, Village, PaymentMethod, SystemSettings, Region, Crop
+from conf.models import District, County, SubCounty, Parish, Village, PaymentMethod, SystemSettings, Region, Crop, \
+    Product, ProductVariation, ProductVariationPrice, ProductUnit
 
 
 # admin.site.unregister(District)
@@ -36,3 +37,23 @@ class ParishAdmin(ModelAdmin):
 @admin.register(Crop)
 class CropAdmin(ModelAdmin):
     list_display = ('name',)
+
+
+@admin.register(ProductUnit)
+class ProductUnitAdmin(ModelAdmin):
+    list_display = ('name',)
+
+
+@admin.register(Product)
+class ProductAdmin(ModelAdmin):
+    list_display = ('name',)
+
+
+@admin.register(ProductVariation)
+class ProductVariationAdmin(ModelAdmin):
+    list_display = ('name',)
+
+
+@admin.register(ProductVariationPrice)
+class ProductVariationPriceAdmin(ModelAdmin):
+    list_display = ('product', 'price')

@@ -153,8 +153,8 @@ class ProductVariation(models.Model):
 
     class Meta:
         db_table = 'product_variation'
-        verbose_name = 'Product'
-        verbose_name_plural = 'Product'
+        verbose_name = 'Product Variation'
+        verbose_name_plural = 'Product Variation'
         unique_together = ['product', 'name']
 
     def __str__(self):

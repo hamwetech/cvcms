@@ -1,14 +1,16 @@
 from django.contrib import admin
 from django.urls import path
 from django.shortcuts import render
+from django.utils.html import format_html
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 # from unfold.admin import ModelAdmin
 # from unfold.admin import StackedInline, TabularInline
 
 from django.contrib.admin import ModelAdmin, StackedInline, TabularInline
 
-from system.forms import FarmerForm, PlantProductionManagementForm, SoilFertilityManagementForm
-from system.models import (
+from system.forms import PlantProductionManagementForm, SoilFertilityManagementForm
+from system.models.models import (
     Farmer,
     FarmerInspection,
     CertificationScope,
@@ -30,32 +32,54 @@ class FarmerAdmin(ModelAdmin):
     # form = FarmerForm
     fieldsets = (
         ('Personal Information', {
-            'fields': ('title', 'first_name', 'other_name', 'surname', 'gender', 'date_of_birth', 'maritual_status',
-                       'is_refugee', 'is_handicap')
+            'fields': ('image', 'title', 'first_name', 'other_name', 'surname', 'gender', 'date_of_birth', 'marital_status',
+                       'is_refugee', 'is_handicap'), "classes": ("tab-basic",)
         }),
         ('Contact Information', {
             'fields': ('phone_number', 'other_phone_number', 'email', 'address', 'village', 'gps_coordinates',
-                       'altitude')
+                       'altitude'), "classes": ("tab-address",)
         }),
         ('Location Information', {
-            'fields': ('district', 'county', 'sub_county', 'parish')
+            'fields': ('district', 'county', 'sub_county', 'parish'), "classes": ("tab-location",)
         }),
         ('Coffee and Crop Information', {
             'fields': ('productive_coffee_trees', 'non_productive_coffee_trees', 'current_yield_estimate',
                        'last_year_parch_harvest', 'last_year_cherry_harvest', 'coffee_acreage', 'other_crop_acreage',
-                       'current_year_estimated_yield', 'conservation_acreage', 'total_acreage')
+                       'current_year_estimated_yield', 'conservation_acreage', 'total_acreage'), "classes": ("tab-crop",)
         }),
         ('Organic and Conventional Plot Information', {
-            'fields': ('organic_plots', 'organic_plot_crop', 'conventional_plots', 'conventional_plot_crop')
+            'fields': ('organic_plots', 'organic_plot_crop', 'conventional_plots', 'conventional_plot_crop'), "classes": ("tab-plot",)
         }),
         ('Certification and Cooperative', {
-            'fields': ('certification_scopes', 'cooperative', 'farmer_group')
+            'fields': ('certification_scopes', 'cooperative', 'farmer_group'), "classes": ("tab-certification",)
         }),
         # ('Metadata', {
         #     'fields': ('create_by', 'create_date', 'update_date', 'is_active', 'qrcode', 'app_id')
         # }),
     )
-    list_display = ('image', 'title')
+
+    list_display = ( '_full_name', 'image','gender', 'date_of_birth', 'action_buttons')
+
+    class Media:
+        js = ("admin/js/tab_control_buttons.js",)
+
+    def _full_name(self, obj):
+        return f"{obj.title} {obj.surname} {obj.first_name}"
+
+    def action_buttons(self, obj):
+        view_url = reverse('admin:system_farmer_change', args=[obj.id])
+        delete_url = reverse('admin:system_farmer_delete', args=[obj.id])
+
+        return format_html(
+            '<a class="btn btn-outline-warning" href="{}" style="margin-right:5px;"><i class="fa fa-edit"></i> Open</a>'
+            '<a class="btn btn-outline-danger" href="{}" ><i class="fa fa-trash"></i> Delete</a>',
+            view_url,
+            delete_url,
+        )
+
+    action_buttons.short_description = "Actions"
+    action_buttons.allow_tags = True
+    _full_name.short_description = "Full Name"
 
 
 # @admin.register(FarmerInspection)
@@ -129,6 +153,9 @@ class FarmerInspectionAdmin(ModelAdmin):
 
 
     ]
+
+    class Media:
+        js = ("admin/js/tab_control_buttons.js",)
 
 
 @admin.register(Collection)
