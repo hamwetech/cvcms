@@ -10,7 +10,7 @@ from django.contrib.auth.models import User
 
 from conf.models import District, County, SubCounty, Parish, Product, Crop, ProductVariation
 from system.models.modelmixin import TimeStampMixin
-from .land import land_upload_path
+from system.models.land import land_upload_path
 
 User = settings.AUTH_USER_MODEL
 
@@ -528,3 +528,38 @@ class Collection(TimeStampMixin):
 
     class Meta:
         db_table = 'collection'
+
+
+class FarmerTransaction(TimeStampMixin):
+
+    TRANSACTION_TYPES = [
+        ('ORDER_DEBIT', 'Order Debit'),  # Farmer buys goods
+        ('PRODUCE_CREDIT', 'Produce Credit'),  # Farmer brings produce
+        ('CASH_CREDIT', 'Cash Credit Given'),  # Farmer receives money
+        ('PAYMENT', 'Payment Made by Farmer'), # Farmer pays back
+        ('ADJUSTMENT', 'Adjustment'),
+    ]
+
+    PAYMENT_METHODS = [
+        ('CASH', 'Cash'),
+        ('BANK', 'Bank'),
+        ('MOBILE_MONEY', 'Mobile Money'),
+        ('NONE', 'None'),
+    ]
+
+    farmer = models.ForeignKey('Farmer', on_delete=models.CASCADE, related_name="transactions")
+    transaction_type = models.CharField(max_length=50, choices=TRANSACTION_TYPES)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='NONE')
+
+    # Positive = credit (farm owes farmer)
+    # Negative = debit (farmer owes farm)
+    amount = models.DecimalField(max_digits=20, decimal_places=2)
+
+    reference = models.CharField(max_length=255, blank=True, null=True)  # order_no, produce_no, etc.
+    description = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.farmer} - {self.transaction_type} - {self.amount}"

@@ -224,27 +224,45 @@
                             </li>
                             <li class="nav-item">
                                 <a href="{% url 'admin:system_farmer_changelist' %}" class="nav-link">
-                                    <i class="nav-icon fas fa-user"></i>
+                                    <i class="nav-icon fas fa-users"></i>
                                     <p>{% trans 'Farmer' %}</p>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a href="{% url 'admin:system_farmerinspection_changelist' %}" class="nav-link">
-                                    <i class="nav-icon fas fa-user"></i>
+                                    <i class="nav-icon fas fa-check-double"></i>
                                     <p>{% trans 'Farmer Inspection' %}</p>
                                 </a>
                             </li>
 
                             <li class="nav-item">
                                 <a href="{% url 'admin:system_collection_changelist' %}" class="nav-link">
-                                    <i class="nav-icon fas fa-user"></i>
+                                    <i class="nav-icon fas fa-shopping-basket"></i>
                                     <p>{% trans 'Collection' %}</p>
+                                </a>
+                            </li>
+                             <li class="nav-item">
+                                <a href="{% url 'admin:system_credit_changelist' %}" class="nav-link">
+                                    <i class="nav-icon fas fa-hands-helping"></i>
+                                    <p>{% trans 'Credit' %}</p>
+                                </a>
+                            </li>
+                             <li class="nav-item">
+                                <a href="{% url 'admin:system_order_changelist' %}" class="nav-link">
+                                    <i class="nav-icon fas fa-shopping-cart"></i>
+                                    <p>{% trans 'Order' %}</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin:messaging_smslog_changelist' %}" class="nav-link">
+                                    <i class="nav-icon fas fa-sms"></i>
+                                    <p>{% trans 'Messaging' %}</p>
                                 </a>
                             </li>
                             <hr>
                             <li class="nav-item">
                                 <a href="{% url 'admin:account_user_changelist' %}" class="nav-link">
-                                    <i class="nav-icon fas fa-user"></i>
+                                    <i class="nav-icon fas fa-user-shield"></i>
                                     <p>{% trans 'User' %}</p>
                                 </a>
                             </li>

@@ -134,7 +134,7 @@ JAZZMIN_SETTINGS = {
     # - carousel
     "changeform_format": "vertical_tabs",
     # override change forms on a per modeladmin basis
-    "changeform_format_overrides": {"auth.user": "collapsible", "auth.group": "vertical_tabs", "admin:system_farmer": "single"},
+    "changeform_format_overrides": {"auth.user": "collapsible", "auth.group": "vertical_tabs", "admin:system_farmer": "single", "system.order": "single"},
     # Add a language dropdown into the admin
 
 }

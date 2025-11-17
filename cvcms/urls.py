@@ -21,14 +21,13 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 from django.conf import settings
 
-import api
-from system.admin import custom_admin_site
 from system.views import DashboardView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('', DashboardView.as_view(), name='dashboard'),
+    path('', include('messaging.urls')),
 ]
 
 # Serving the media files in development mode
